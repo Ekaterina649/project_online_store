@@ -1,28 +1,26 @@
 [
-{
-  "model": "catalog.product",
-  "pk": 1,
-  "fields": {
-    "name": "булочка с корицей",
-    "description": "сдобная булочка 100 г",
-    "image": "",
-    "category": 3,
-    "price": "60.00",
-    "created_at": "2025-11-23T13:55:50.801Z",
-    "updated_at": "2025-11-23T13:55:50.801Z"
+  {
+    "model": "catalog.product",
+    "pk": 1,
+    "fields": {
+      "name": "Smartphone",
+      "description": "Modern smartphone",
+      "price": "499.99",
+      "category": 1,
+      "created_at": "2025-11-23T12:00:00Z",
+      "updated_at": "2025-11-23T12:00:00Z"
+    }
+  },
+  {
+    "model": "catalog.product",
+    "pk": 2,
+    "fields": {
+      "name": "Novel",
+      "description": "A good book",
+      "price": "15.99",
+      "category": 2,
+      "created_at": "2025-11-23T12:00:00Z",
+      "updated_at": "2025-11-23T12:00:00Z"
+    }
   }
-},
-{
-  "model": "catalog.product",
-  "pk": 2,
-  "fields": {
-    "name": "манго",
-    "description": "спелый манго 300 г",
-    "image": "",
-    "category": 1,
-    "price": "250.00",
-    "created_at": "2025-11-23T13:57:00.257Z",
-    "updated_at": "2025-11-23T14:07:00.447Z"
-  }
-}
 ]
