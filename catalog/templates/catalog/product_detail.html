@@ -1,0 +1,23 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}{{ product.name }} — ProductStore{% endblock %}
+
+{% block content %}
+<div class="row text-center">
+        <div class="col-3">
+            <div class="card mb-4 box-shadow">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+            {% endif %}
+            <div class="card-body">
+                <h1 class="card-title">{{ product.name }}</h1>
+                <p class="card-text"><strong>Цена:</strong> {{ product.price }} ₽</p>
+                <p class="card-text"><strong>Описание:</strong></p>
+                <p>{{ product.description|linebreaks }}</p>
+                <p class="text-muted">Создано: {{ product.created_at|date:"d.m.Y" }}</p>
+                <a href="{% url 'catalog:home' %}" class="btn btn-secondary">Назад к каталогу</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
