@@ -8,6 +8,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_published = models.BooleanField(default=False, verbose_name='Опубликовано')
     is_published = models.BooleanField(default=False, verbose_name='Опубликовано')
+    views_count = models.PositiveIntegerField(default=0, verbose_name='Количество просмотров')
 
 
     class Meta:
