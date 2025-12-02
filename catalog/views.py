@@ -1,35 +1,36 @@
-from django.shortcuts import render, get_object_or_404
-
+from django.views.generic import ListView, DetailView, TemplateView
 from catalog.models import Product
+from django.urls import reverse
+from django.shortcuts import redirect
+
+class ProductListView(ListView):
+    model = Product
+    template_name = 'catalog/product_list.html'
+    context_object_name = 'products'
 
 
-def index(request):
-    """Домашняя страница"""
-    products = Product.objects.all()
-    context = {"products": products}
-    return render(request, 'catalog/home.html', context)
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'catalog/product_detail.html'
+    context_object_name = 'product'
 
 
-def contacts(request):
-    """Страница контактов"""
-    if request.method == 'POST':
+class ContactsView(TemplateView):
+    template_name = 'catalog/contacts.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['success'] = self.request.GET.get('success') == '1'
+        if context['success']:
+            context['name'] = self.request.GET.get('name')
+            context['phone'] = self.request.GET.get('phone')
+            context['message'] = self.request.GET.get('message')
+        return context
+
+    def post(self, request, *args, **kwargs):
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         message = request.POST.get('message')
 
-        print(f"Новое сообщение от: {name}, телефон: {phone}, сообщение: {message}")
-
-
-        return render(request, 'catalog/contacts.html', {
-            'success': True,
-            'name': name,
-            'phone': phone,
-            'message': message
-        })
-
-    return render(request, 'catalog/contacts.html')
-
-def product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    context = {"product": product}
-    return render(request, 'catalog/product_detail.html',context)
+        url = reverse('catalog:contacts')
+        return redirect(f"{url}?success=1&name={name}&phone={phone}&message={message}")
