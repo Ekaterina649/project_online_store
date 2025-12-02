@@ -15,7 +15,7 @@
                 <p class="card-text"><strong>Описание:</strong></p>
                 <p>{{ product.description|linebreaks }}</p>
                 <p class="text-muted">Создано: {{ product.created_at|date:"d.m.Y" }}</p>
-                <a href="{% url 'catalog:home' %}" class="btn btn-secondary">Назад к каталогу</a>
+                <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary">Назад к каталогу</a>
             </div>
         </div>
     </div>
