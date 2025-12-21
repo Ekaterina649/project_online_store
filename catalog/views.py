@@ -1,6 +1,8 @@
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
+
+from catalog.forms import ProductForm
 from catalog.models import Product
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect
 
 class ProductListView(ListView):
@@ -34,3 +36,24 @@ class ContactsView(TemplateView):
 
         url = reverse('catalog:contacts')
         return redirect(f"{url}?success=1&name={name}&phone={phone}&message={message}")
+
+
+class ProductCreateView(CreateView):
+    model = Product
+    form_class = ProductForm
+    template_name = 'catalog/product_post_form.html'
+    success_url = reverse_lazy('catalog:product_list')
+
+
+class ProductUpdateView(UpdateView):
+    model = Product
+    form_class = ProductForm
+    template_name = 'catalog/product_post_form.html'
+
+    def get_success_url(self):
+        return reverse('catalog:product_detail', kwargs={'pk': self.object.pk})
+
+class ProductDeleteView(DeleteView):
+    model = Product
+    template_name = 'catalog/post_confirm_delete.html'
+    success_url = reverse_lazy('catalog:product_list')
