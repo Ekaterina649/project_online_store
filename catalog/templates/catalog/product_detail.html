@@ -9,14 +9,23 @@
             {% if product.image %}
                 <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
             {% endif %}
-            <div class="card-body">
+           <div class="card-body">
                 <h1 class="card-title">{{ product.name }}</h1>
                 <p class="card-text"><strong>Цена:</strong> {{ product.price }} ₽</p>
                 <p class="card-text"><strong>Описание:</strong></p>
                 <p>{{ product.description|linebreaks }}</p>
                 <p class="text-muted">Создано: {{ product.created_at|date:"d.m.Y" }}</p>
-                <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary">Назад к каталогу</a>
+
+                <div class="mb-3">
+                    <a href="{% url 'catalog:product_edit' product.pk %}" class="btn btn-outline-primary">Редактировать</a>
+                    <a href="{% url 'catalog:product_delete' product.pk %}" class="btn btn-outline-danger">Удалить</a>
+                </div>
+
+                <div class="mt-3">
+                    <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary">Назад к каталогу</a>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
