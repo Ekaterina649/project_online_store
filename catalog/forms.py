@@ -2,18 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from catalog.models import Product
-
-FORBIDDEN_WORDS = [
-    'казино',
-'криптовалюта',
-'крипта',
-'биржа',
-'дешево',
-'бесплатно',
-'обман',
-'полиция',
-'радар',
-]
+from catalog.templates.catalog.constants import FORBIDDEN_WORDS
 
 
 class ProductForm(forms.ModelForm):

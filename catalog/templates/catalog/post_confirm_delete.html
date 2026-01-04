@@ -2,11 +2,11 @@
 
 {% block content %}
 <h1 class="text-danger">Удалить запись о продукте?</h1>
-<p>Вы уверены, что хотите удалить «{{ product.name }}»?</p>
+<p>Вы уверены, что хотите удалить «{{ object.name }}»?</p>
 
 <form method="post">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Да, удалить</button>
     <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary">Отмена</a>
 </form>
-{% endblock %}>
+{% endblock %}
