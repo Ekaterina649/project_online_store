@@ -21,6 +21,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10,decimal_places=2,verbose_name='цена за покупку')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_published = models.BooleanField(blank=True, null=True, default=False,help_text='Отметьте, чтобы опубликовать продукт')
 
     def __str__(self):
         return f'{self.name} {self.category} {self.price}'
