@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
 
 from catalog.forms import ProductForm
@@ -11,13 +12,13 @@ class ProductListView(ListView):
     context_object_name = 'products'
 
 
-class ProductDetailView(DetailView):
+class ProductDetailView(LoginRequiredMixin,DetailView):
     model = Product
     template_name = 'catalog/product_detail.html'
     context_object_name = 'product'
 
 
-class ContactsView(TemplateView):
+class ContactsView(LoginRequiredMixin,TemplateView):
     template_name = 'catalog/contacts.html'
 
     def get_context_data(self, **kwargs):
@@ -38,14 +39,14 @@ class ContactsView(TemplateView):
         return redirect(f"{url}?success=1&name={name}&phone={phone}&message={message}")
 
 
-class ProductCreateView(CreateView):
+class ProductCreateView(LoginRequiredMixin,CreateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_post_form.html'
     success_url = reverse_lazy('catalog:product_list')
 
 
-class ProductUpdateView(UpdateView):
+class ProductUpdateView(LoginRequiredMixin,UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_post_form.html'
@@ -53,7 +54,7 @@ class ProductUpdateView(UpdateView):
     def get_success_url(self):
         return reverse('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-class ProductDeleteView(DeleteView):
+class ProductDeleteView(LoginRequiredMixin,DeleteView):
     model = Product
     template_name = 'catalog/post_confirm_delete.html'
     success_url = reverse_lazy('catalog:product_list')
