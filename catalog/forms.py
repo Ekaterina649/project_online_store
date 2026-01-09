@@ -33,13 +33,14 @@ class ProductForm(forms.ModelForm):
         return price
 
     def __init__(self, *args, **kwargs):
-        super(ProductForm, self).__init__(*args, **kwargs)
-        self.fields['name'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Введите название продукта'})
-        self.fields['description'].widget.attrs.update(
-            {'class': 'form-control', 'placeholder': 'Введите описание продукта'})
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        self.fields['name'].widget.attrs.update({'class': 'form-control'})
+        self.fields['description'].widget.attrs.update({'class': 'form-control'})
         self.fields['image'].widget.attrs.update({'class': 'form-control'})
         self.fields['category'].widget.attrs.update({'class': 'form-control'})
-        self.fields['price'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Введите цену продукта'})
+        self.fields['price'].widget.attrs.update({'class': 'form-control'})
 
-
-
+        if not user or not user.has_perm('catalog.can_unpublish_product'):
+            self.fields.pop('is_published')

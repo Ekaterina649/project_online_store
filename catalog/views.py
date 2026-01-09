@@ -1,10 +1,12 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.views import View
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
 
 from catalog.forms import ProductForm
 from catalog.models import Product
 from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
+
 
 class ProductListView(ListView):
     model = Product
@@ -51,10 +53,26 @@ class ProductUpdateView(LoginRequiredMixin,UpdateView):
     form_class = ProductForm
     template_name = 'catalog/product_post_form.html'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_success_url(self):
         return reverse('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-class ProductDeleteView(LoginRequiredMixin,DeleteView):
+class ProductDeleteView(LoginRequiredMixin,PermissionRequiredMixin, DeleteView):
     model = Product
     template_name = 'catalog/post_confirm_delete.html'
+    permission_required = 'catalog.delete_product'
     success_url = reverse_lazy('catalog:product_list')
+
+
+class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'catalog.can_unpublish_product'
+
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        product.is_published = False
+        product.save()
+        return redirect('catalog:product_detail', pk=pk)
