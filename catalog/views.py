@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
 from django.views import View
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
 
@@ -47,8 +47,17 @@ class ProductCreateView(LoginRequiredMixin,CreateView):
     template_name = 'catalog/product_post_form.html'
     success_url = reverse_lazy('catalog:product_list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # передаём user в форму
+        return kwargs
 
-class ProductUpdateView(LoginRequiredMixin,UpdateView):
+    def form_valid(self, form):
+        form.instance.owner = self.request.user  # автоматически ставим текущего пользователя
+        return super().form_valid(form)
+
+
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_post_form.html'
@@ -58,14 +67,45 @@ class ProductUpdateView(LoginRequiredMixin,UpdateView):
         kwargs['user'] = self.request.user
         return kwargs
 
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if not (
+            request.user.is_superuser or
+            obj.owner == request.user or
+            request.user.groups.filter(name='Модератор продуктов').exists()
+        ):
+            return redirect('catalog:product_list')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         return reverse('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-class ProductDeleteView(LoginRequiredMixin,PermissionRequiredMixin, DeleteView):
+
+class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Product
     template_name = 'catalog/post_confirm_delete.html'
-    permission_required = 'catalog.delete_product'
     success_url = reverse_lazy('catalog:product_list')
+    permission_required = 'catalog.delete_product'
+
+    def has_permission(self):
+        # Суперпользователь всегда может
+        if self.request.user.is_superuser:
+            return True
+
+        # Проверка базового разрешения
+        if not super().has_permission():
+            return False
+
+        product = self.get_object()
+        # Владелец или модератор
+        return (
+            product.owner == self.request.user or
+            self.request.user.groups.filter(name='Модератор продуктов').exists()
+        )
+
+
+
+
 
 
 class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):

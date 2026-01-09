@@ -10,7 +10,7 @@ class ProductForm(forms.ModelForm):
         model = Product
 
         fields = '__all__'
-        exclude = ['created_at','updated_at']
+        exclude = ['created_at','updated_at',]
 
     def clean_name(self):
             name = self.cleaned_data.get('name')
@@ -35,6 +35,10 @@ class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+
+        if user:
+            self.fields['owner'].initial = user
+            self.fields['owner'].disabled = True
 
         self.fields['name'].widget.attrs.update({'class': 'form-control'})
         self.fields['description'].widget.attrs.update({'class': 'form-control'})
