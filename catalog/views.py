@@ -71,14 +71,10 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
         obj = self.get_object()
         if not (
             request.user.is_superuser or
-            obj.owner == request.user or
-            request.user.groups.filter(name='Модератор продуктов').exists()
+            obj.owner == request.user
         ):
             return redirect('catalog:product_list')
         return super().dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        return reverse('catalog:product_detail', kwargs={'pk': self.object.pk})
 
 
 class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
@@ -88,20 +84,18 @@ class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView)
     permission_required = 'catalog.delete_product'
 
     def has_permission(self):
-        # Суперпользователь всегда может
-        if self.request.user.is_superuser:
+        user = self.request.user
+        product = self.get_object()
+
+        if user.is_superuser:
             return True
 
-        # Проверка базового разрешения
-        if not super().has_permission():
-            return False
+        # владелец всегда может
+        if product.owner == user:
+            return True
 
-        product = self.get_object()
-        # Владелец или модератор
-        return (
-            product.owner == self.request.user or
-            self.request.user.groups.filter(name='Модератор продуктов').exists()
-        )
+        # модератор
+        return user.has_perm('catalog.delete_product')
 
 
 
