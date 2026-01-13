@@ -1,17 +1,34 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
 
 from catalog.forms import ProductForm
 from catalog.models import Product
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect, get_object_or_404
+from django.core.cache import cache
+
+from config.settings import CACHE_ENABLED
 
 
 class ProductListView(ListView):
     model = Product
     template_name = 'catalog/product_list.html'
     context_object_name = 'products'
+
+    def get_queryset(self):
+        if not CACHE_ENABLED:
+            return Product.objects.all()
+
+        cache_key = 'products_queryset'
+        queryset = cache.get(cache_key)
+
+        if queryset is None:
+            queryset = Product.objects.all()
+            cache.set(cache_key, list(queryset), 60 * 15)
+        return queryset
 
 
 class ProductDetailView(LoginRequiredMixin,DetailView):
@@ -56,7 +73,7 @@ class ProductCreateView(LoginRequiredMixin,CreateView):
         form.instance.owner = self.request.user  # автоматически ставим текущего пользователя
         return super().form_valid(form)
 
-
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
@@ -96,10 +113,6 @@ class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView)
 
         # модератор
         return user.has_perm('catalog.delete_product')
-
-
-
-
 
 
 class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
