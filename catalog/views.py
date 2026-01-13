@@ -1,10 +1,12 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.views import View
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
 
 from catalog.forms import ProductForm
 from catalog.models import Product
 from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
+
 
 class ProductListView(ListView):
     model = Product
@@ -45,16 +47,66 @@ class ProductCreateView(LoginRequiredMixin,CreateView):
     template_name = 'catalog/product_post_form.html'
     success_url = reverse_lazy('catalog:product_list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # передаём user в форму
+        return kwargs
 
-class ProductUpdateView(LoginRequiredMixin,UpdateView):
+    def form_valid(self, form):
+        form.instance.owner = self.request.user  # автоматически ставим текущего пользователя
+        return super().form_valid(form)
+
+
+class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_post_form.html'
 
-    def get_success_url(self):
-        return reverse('catalog:product_detail', kwargs={'pk': self.object.pk})
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
-class ProductDeleteView(LoginRequiredMixin,DeleteView):
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if not (
+            request.user.is_superuser or
+            obj.owner == request.user
+        ):
+            return redirect('catalog:product_list')
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Product
     template_name = 'catalog/post_confirm_delete.html'
     success_url = reverse_lazy('catalog:product_list')
+    permission_required = 'catalog.delete_product'
+
+    def has_permission(self):
+        user = self.request.user
+        product = self.get_object()
+
+        if user.is_superuser:
+            return True
+
+        # владелец всегда может
+        if product.owner == user:
+            return True
+
+        # модератор
+        return user.has_perm('catalog.delete_product')
+
+
+
+
+
+
+class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = 'catalog.can_unpublish_product'
+
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        product.is_published = False
+        product.save()
+        return redirect('catalog:product_detail', pk=pk)

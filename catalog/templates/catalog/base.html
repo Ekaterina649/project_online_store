@@ -12,6 +12,12 @@
 
 <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
     <h1 class="display-4">ProductStore</h1>
+    <p>{% if request.user.is_authenticated %}
+        <p>Добро пожаловать, {{ request.user.get_full_name|default:request.user.email}}</p>
+    {% else %}
+        <p>Добро пожаловать, Гость</p>
+    {% endif %}
+    </p>
     <p class="lead">ProductStore — это отличный вариант покупки свежих продуктов отличного качества рядом с вами</p>
     <a href="{% url 'catalog:post_create' %}" class="btn btn-outline-primary btn-sm me-2">
         Новая запись
