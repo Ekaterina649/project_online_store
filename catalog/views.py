@@ -1,17 +1,29 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, UserPassesTestMixin
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
 
 from catalog.forms import ProductForm
-from catalog.models import Product
+from catalog.models import Product, Category
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect, get_object_or_404
+from django.core.cache import cache
+
+from catalog.services import ProductService
+from config.settings import CACHE_ENABLED
 
 
 class ProductListView(ListView):
     model = Product
     template_name = 'catalog/product_list.html'
     context_object_name = 'products'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Добавляем все категории для отображения кнопок
+        context['categories'] = Category.objects.all()
+        return context
 
 
 class ProductDetailView(LoginRequiredMixin,DetailView):
@@ -56,7 +68,7 @@ class ProductCreateView(LoginRequiredMixin,CreateView):
         form.instance.owner = self.request.user  # автоматически ставим текущего пользователя
         return super().form_valid(form)
 
-
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class ProductUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
@@ -98,10 +110,6 @@ class ProductDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView)
         return user.has_perm('catalog.delete_product')
 
 
-
-
-
-
 class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = 'catalog.can_unpublish_product'
 
@@ -110,3 +118,32 @@ class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
         product.is_published = False
         product.save()
         return redirect('catalog:product_detail', pk=pk)
+
+class ProductByCategoryListView(ListView):
+
+    model = Product
+    template_name = 'catalog/product_by_category_list.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        category_id = self.kwargs.get('category_id')
+        if not CACHE_ENABLED:
+            return Product.objects.filter(category_id=category_id)
+
+        cache_key = f'products_category_{category_id}'
+        queryset = cache.get(cache_key)
+
+        if queryset is None:
+            queryset = Product.objects.filter(category_id=category_id)
+            cache.set(cache_key, list(queryset), 60 * 15)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        category_id = self.kwargs.get('category_id')
+        category = get_object_or_404(Category, id=category_id)
+        context['category'] = category
+
+        context['all_categories'] = Category.objects.all()
+        return context
