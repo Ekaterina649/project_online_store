@@ -1,20 +1,14 @@
 {% extends "catalog/base.html" %}
 
 {% block content %}
-
-<div class="mb-4">
-    <h5>Просмотреть по категориям:</h5>
-    <div class="d-flex flex-wrap gap-2">
-        {% for category in categories %}
-            <a href="{% url 'catalog:products_by_category' category.id %}"
-               class="btn btn-outline-primary">
-                {{ category.name }}
-            </a>
-        {% endfor %}
-    </div>
-</div>
-
 <div class="row">
+    <div class="col-12 mb-4">
+        <h1>{{ category.name }}</h1>
+        {% if category.description %}
+            <p class="text-muted">{{ category.description }}</p>
+        {% endif %}
+    </div>
+
     {% for product in products %}
     <div class="col-md-4 mb-4">
         <div class="card h-100 shadow-sm">
@@ -35,7 +29,12 @@
         </div>
     </div>
     {% empty %}
-    <p>Товаров пока нет.</p>
+        <p>В категории "{{ category.name }}" товаров пока нет.</p>
     {% endfor %}
+    <div class="col-12">
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-secondary">
+            Вернуться ко всем продуктам
+        </a>
+    </div>
 </div>
 {% endblock %}

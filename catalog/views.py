@@ -5,11 +5,12 @@ from django.views.decorators.cache import cache_page
 from django.views.generic import ListView, DetailView, TemplateView, CreateView, UpdateView, DeleteView
 
 from catalog.forms import ProductForm
-from catalog.models import Product
+from catalog.models import Product, Category
 from django.urls import reverse, reverse_lazy
 from django.shortcuts import redirect, get_object_or_404
 from django.core.cache import cache
 
+from catalog.services import ProductService
 from config.settings import CACHE_ENABLED
 
 
@@ -18,17 +19,11 @@ class ProductListView(ListView):
     template_name = 'catalog/product_list.html'
     context_object_name = 'products'
 
-    def get_queryset(self):
-        if not CACHE_ENABLED:
-            return Product.objects.all()
-
-        cache_key = 'products_queryset'
-        queryset = cache.get(cache_key)
-
-        if queryset is None:
-            queryset = Product.objects.all()
-            cache.set(cache_key, list(queryset), 60 * 15)
-        return queryset
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Добавляем все категории для отображения кнопок
+        context['categories'] = Category.objects.all()
+        return context
 
 
 class ProductDetailView(LoginRequiredMixin,DetailView):
@@ -123,3 +118,32 @@ class ProductUnpublishView(LoginRequiredMixin, PermissionRequiredMixin, View):
         product.is_published = False
         product.save()
         return redirect('catalog:product_detail', pk=pk)
+
+class ProductByCategoryListView(ListView):
+
+    model = Product
+    template_name = 'catalog/product_by_category_list.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        category_id = self.kwargs.get('category_id')
+        if not CACHE_ENABLED:
+            return Product.objects.filter(category_id=category_id)
+
+        cache_key = f'products_category_{category_id}'
+        queryset = cache.get(cache_key)
+
+        if queryset is None:
+            queryset = Product.objects.filter(category_id=category_id)
+            cache.set(cache_key, list(queryset), 60 * 15)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+        category_id = self.kwargs.get('category_id')
+        category = get_object_or_404(Category, id=category_id)
+        context['category'] = category
+
+        context['all_categories'] = Category.objects.all()
+        return context
